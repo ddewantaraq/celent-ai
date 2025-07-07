@@ -6,6 +6,10 @@ services:
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     restart: always
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start
   db:
     image: pgvector/pgvector:pg16
     container_name: celent_ai_db

@@ -1,32 +1,31 @@
 import { mastra } from '../../mastra';
 
-export async function findCandidateService({ query, runId, stepId }: { query: string, runId?: string, stepId?: string }) {
+export async function findCandidateService({ query, suspendedStep }: { query: string, suspendedStep?: string[] }) {
   const workflow = mastra.getWorkflow('extractTalentInfoWorkflow');
-  let run, result;
+  let run, result: any = {};
 
-  if (!runId || !stepId) {
-    // Start a new workflow run
-    run = await workflow.createRunAsync();
+  // Start a new workflow run
+  run = await workflow.createRunAsync();
+
+  if (!suspendedStep || suspendedStep.length === 0) {
     result = await run.start({ inputData: { query } });
   } else {
-    // Resume a suspended workflow run
-    run = await workflow.createRunAsync({ runId });
-    result = await run.resume({ step: stepId, resumeData: { query } });
+    // resume
+    result = await run.resume({ step: suspendedStep, resumeData: { query } });
   }
 
   if (result.status === 'suspended') {
     const suspendedStep = Array.isArray(result.suspended) ? result.suspended[0] : result.suspended;
-    const stepId = suspendedStep && typeof suspendedStep === 'object' && 'id' in suspendedStep ? suspendedStep.id : undefined;
-    if (!stepId) {
+
+    if (!suspendedStep) {
       throw new Error('Could not determine suspended step id.');
     }
     return {
       suspended: true,
-      runId: run.runId,
-      stepId,
+      suspendedStep: suspendedStep,
       message: 'Please re-enter your query and include job title, platform, and location.'
     };
   }
 
-  return { success: true, result };
+  return { success: true, result: result?.result };
 } 

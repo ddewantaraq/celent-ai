@@ -49,7 +49,11 @@ const callExtractAgentStep = createStep({
         query: '', // user will provide new query
       });
       // The workflow will resume here with new input
-      return;
+      return { jobTitle: 'not provided', 
+        platform: 'not provided', 
+        location: 'not provided',
+        additionalDesc: 'not provided' 
+    };
     }
     return result;
   },

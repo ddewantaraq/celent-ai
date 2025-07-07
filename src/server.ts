@@ -24,7 +24,7 @@ app.post('/weather', authenticateJWT, async (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/candidate', candidateRoutes);
+app.use('/api/candidates', candidateRoutes);
 
 const PORT = process.env.PORT || 3000;
 
@@ -33,7 +33,7 @@ const PORT = process.env.PORT || 3000;
     await sequelize.authenticate();
     console.log('Database connection established.');
     app.listen(PORT, () => {
-      console.log(`Mastra + Expresss server running on port ${PORT}`);
+      console.log(`Celent AI server running on port ${PORT}`);
     });
   } catch (err) {
     console.error('Unable to connect to the database:', err);
