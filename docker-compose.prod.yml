@@ -1,6 +1,9 @@
 services:
   mastra-express:
-    build: .
+    build:
+      context: .
+      args:
+        NODE_ENV: production
     env_file:
       - docker.env.prod
     ports:
