@@ -1,0 +1,8 @@
+services:
+  mastra-express:
+    build: .
+    env_file:
+      - docker.env.prod
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: always 
