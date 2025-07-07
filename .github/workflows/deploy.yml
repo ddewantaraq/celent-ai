@@ -33,4 +33,4 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          ssh ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }} "cd /root/celent-ai && docker-compose -f docker-compose.prod.yml up -d --build" 
+          ssh ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }} "cd /root/celent-ai && docker-compose -f docker-compose.prod.yml down && docker-compose -f docker-compose.prod.yml up -d --build" 
