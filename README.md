@@ -43,27 +43,16 @@ cd your-repo
 
 ---
 
-## 3. Configure Environment Variables (Optional)
+## 3. Development vs. Production Deployment
 
-If you need to set environment variables (e.g., for database URLs, API keys), edit the `docker-compose.yml` file:
-
-```yaml
-    environment:
-      - NODE_ENV=production
-      - YOUR_ENV_VAR=value
-```
-
-Or create a `.env` file and reference it in `docker-compose.yml`:
-```yaml
-    env_file:
-      - .env
-```
+- **Development:** Uses `docker-compose.yml` and `docker.env` (includes local DB service).
+- **Production:** Uses `docker-compose.prod.yml` and `docker.env.prod` (backend app only, connects to your external/managed DB).
 
 ---
 
-## 3a. Production Environment Variables and Build (Recommended for VPS)
+## 4. Production Environment Variables
 
-For production deployments, you should set your environment variables in a `.env` file (or `docker.env` as used in this project). Example for production:
+For production deployments, set your environment variables in `docker.env.prod`:
 
 ```env
 NODE_ENV=production
@@ -71,78 +60,61 @@ PORT=3000
 DB_USER=your_prod_user
 DB_PASSWORD=your_prod_password
 DB_NAME=your_prod_db
-DB_HOST=your_prod_host
-DB_PORT=your_prod_port
+DB_HOST=your_prod_db_host
+DB_PORT=your_prod_db_port
 ```
 
-Make sure to update these values to match your production database credentials and host.
-
-### Building for Production
-
-When building your Docker image for production, pass the build argument to ensure the correct native libsql package is installed:
-
-```sh
-sudo docker compose build --build-arg NODE_ENV=production
-sudo docker compose up -d
-```
-
-Or, if using plain Docker:
-
-```sh
-docker build --build-arg NODE_ENV=production -t your-image-name .
-```
-
-This ensures the Dockerfile installs `@libsql/linux-x64-gnu` for production, and `@libsql/linux-arm64-musl` for development or other environments.
+Update these values to match your production database credentials and host.
 
 ---
 
-## 4. Build and Start the App
+## 5. Build and Start the App (Production)
 
-From your project directory (where `docker-compose.yml` is located), run:
+From your project directory (where `docker-compose.prod.yml` is located), run:
 
 ```sh
-sudo docker compose up --build -d
+docker compose -f docker-compose.prod.yml up --build -d
 ```
 
 - `--build` ensures the image is rebuilt with any changes.
-- `-d` runs the containers in the background (detached mode).
+- `-d` runs the container in the background (detached mode).
 
 ---
 
-## 5. Check Logs and Status
+## 6. Check Logs and Status
 
 To see logs:
 ```sh
-sudo docker compose logs -f
+docker compose -f docker-compose.prod.yml logs -f
 ```
 
 To check running containers:
 ```sh
-sudo docker ps
+docker ps
 ```
 
 ---
 
-## 6. Update and Restart
+## 7. Update and Restart (Production)
 
 If you update your code:
 ```sh
 git pull
-sudo docker compose up --build -d
+docker compose -f docker-compose.prod.yml up --build -d
 ```
 
 ---
 
-## 7. Stopping the App
+## 8. Stopping the App (Production)
 
 To stop the app:
 ```sh
-sudo docker compose down
+docker compose -f docker-compose.prod.yml down
 ```
 
 ---
 
-## 8. Accessing the App
+## 9. Accessing the App
 
 Your app will be available at:
 ```
@@ -154,6 +126,7 @@ If you want to use a custom domain or SSL, set up a reverse proxy (e.g., Nginx, 
 ---
 
 ## Notes
-- For production, use a persistent database (not in-memory) by updating the storage config and adding a database service to `docker-compose.yml`.
-- Adjust the `restart:` policy in `docker-compose.yml` as needed (`always`, `unless-stopped`, etc.).
+- For production, the backend app connects to your managed/external database (no local DB container).
+- `docker.env.prod` and `docker.env` are both ignored by git for security.
+- Adjust the `restart:` policy in `docker-compose.prod.yml` as needed (`always`, `unless-stopped`, etc.).
 - Make sure your firewall allows traffic on port 3000 (or your chosen port). 
