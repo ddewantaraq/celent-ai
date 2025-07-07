@@ -1,5 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { mastra } from './mastra/index';
 import authRoutes from './routes/auth';
 import { authenticateJWT } from './middleware/auth';
@@ -8,6 +11,14 @@ import candidateRoutes from './routes/candidate';
 
 const app = express();
 app.use(express.json());
+
+// Security middlewares
+app.use(cors());
+app.use(helmet());
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+}));
 
 // Example endpoint to trigger the weather workflow
 app.post('/weather', authenticateJWT, async (req, res) => {

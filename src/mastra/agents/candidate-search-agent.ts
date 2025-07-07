@@ -1,5 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 import { groq } from '@ai-sdk/groq';
+import { celentMemory } from '../memory';
 
 export const candidateSearchAgent = new Agent({
   name: 'Candidate Search Agent',
@@ -12,4 +13,5 @@ export const candidateSearchAgent = new Agent({
     Respond only with a JSON array of candidate objects.
   `,
   model: groq('llama-3.3-70b-versatile'),
+  memory: celentMemory
 }); 

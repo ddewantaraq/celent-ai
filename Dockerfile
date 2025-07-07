@@ -12,8 +12,7 @@ WORKDIR /app
 
 # Install dependencies (including dev for build)
 COPY package*.json ./
-RUN apk add --no-cache python3 make g++ \
-  && npm install \
+RUN npm install \
   && if [ "$NODE_ENV" = "production" ]; then \
        npm install @libsql/linux-x64-gnu; \
      else \

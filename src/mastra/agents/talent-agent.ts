@@ -1,5 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 import { groq } from '@ai-sdk/groq';
+import { celentMemory } from '../memory';
 
 export const extractTalentInfoAgent = new Agent({
   name: 'Talent Info Extractor',
@@ -15,4 +16,5 @@ export const extractTalentInfoAgent = new Agent({
     Respond only with a JSON object with keys: jobTitle, platform, location, additionalDescription.
   `,
   model: groq('llama-3.3-70b-versatile'),
+  memory: celentMemory
 });
