@@ -1,0 +1,31 @@
+name: Deploy to Vultr
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VULTR_SSH_KEY }}
+
+      - name: Copy files to VPS
+        run: |
+          rsync -avz --exclude '.git*' --exclude 'node_modules' ./ ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }}:/root/celent-ai
+
+      - name: Write .env and docker.env.prod on VPS
+        run: |
+          ssh ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }} "echo '${{ secrets.ENV_FILE }}' > /root/celent-ai/.env"
+          ssh ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }} "echo '${{ secrets.DOCKER_ENV_PROD_FILE }}' > /root/celent-ai/docker.env.prod"
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }} "cd /root/celent-ai && docker-compose -f docker-compose.prod.yml up -d --build" 
