@@ -61,6 +61,41 @@ Or create a `.env` file and reference it in `docker-compose.yml`:
 
 ---
 
+## 3a. Production Environment Variables and Build (Recommended for VPS)
+
+For production deployments, you should set your environment variables in a `.env` file (or `docker.env` as used in this project). Example for production:
+
+```env
+NODE_ENV=production
+PORT=3000
+DB_USER=your_prod_user
+DB_PASSWORD=your_prod_password
+DB_NAME=your_prod_db
+DB_HOST=your_prod_host
+DB_PORT=your_prod_port
+```
+
+Make sure to update these values to match your production database credentials and host.
+
+### Building for Production
+
+When building your Docker image for production, pass the build argument to ensure the correct native libsql package is installed:
+
+```sh
+sudo docker compose build --build-arg NODE_ENV=production
+sudo docker compose up -d
+```
+
+Or, if using plain Docker:
+
+```sh
+docker build --build-arg NODE_ENV=production -t your-image-name .
+```
+
+This ensures the Dockerfile installs `@libsql/linux-x64-gnu` for production, and `@libsql/linux-arm64-musl` for development or other environments.
+
+---
+
 ## 4. Build and Start the App
 
 From your project directory (where `docker-compose.yml` is located), run:

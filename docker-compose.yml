@@ -1,9 +1,25 @@
-version: '3.8'
 services:
   mastra-express:
     build: .
-    ports:
-      - "3000:3000"
-    restart: always
     env_file:
       - docker.env
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    restart: always
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: celent_ai_db
+    env_file:
+      - docker.env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "6699:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+volumes:
+  pgdata:
