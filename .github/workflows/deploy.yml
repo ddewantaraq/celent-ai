@@ -32,7 +32,6 @@ jobs:
           ssh ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }} "echo '${{ secrets.DOCKER_ENV_PROD_FILE }}' > /root/celent-ai/docker.env.prod"
 
       - name: Write CA certificate on VPS
-        if: ${{ secrets.PG_CA_CERT != '' }}
         run: |
           ssh ${{ secrets.VULTR_USER }}@${{ secrets.VULTR_HOST }} "echo '${{ secrets.PG_CA_CERT }}' > /root/ca.crt"
 
