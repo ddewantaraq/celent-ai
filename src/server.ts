@@ -4,6 +4,7 @@ import { mastra } from './mastra/index';
 import authRoutes from './routes/auth';
 import { authenticateJWT } from './middleware/auth';
 import sequelize from './config/database';
+import candidateRoutes from './routes/candidate';
 
 const app = express();
 app.use(express.json());
@@ -23,6 +24,7 @@ app.post('/weather', authenticateJWT, async (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/candidate', candidateRoutes);
 
 const PORT = process.env.PORT || 3000;
 
