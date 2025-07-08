@@ -76,18 +76,18 @@ const apiKey = process.env.SMITHERY_API_KEY;
 const serverName = process.env.SMITHERY_LINKEDIN_URL;
 
 // Initialize MCP client for Smithery (singleton)
-// const mcp = new MCPClient({
-//   servers: {
-//     smithery: {
-//       url: new URL(`https://server.smithery.ai/${serverName}/mcp?api_key=${apiKey}&profile=${profileId}`),
-//       requestInit: {
-//         headers: {
-//           Authorization: `Bearer ${process.env.SMITHERY_API_KEY}`,
-//         },
-//       },
-//     },
-//   },
-// });
+const mcp = new MCPClient({
+  servers: {
+    smithery: {
+      url: new URL(`https://server.smithery.ai/${serverName}/mcp?api_key=${apiKey}&profile=${profileId}`),
+      requestInit: {
+        headers: {
+          Authorization: `Bearer ${process.env.SMITHERY_API_KEY}`,
+        },
+      },
+    },
+  },
+});
 
 const callCandidateSearchStep = createStep({
   id: 'call-candidate-search-agent',
@@ -99,7 +99,7 @@ const callCandidateSearchStep = createStep({
     const threadId: string = runtimeContext?.get?.('thread_id');
     const resourceId: string = runtimeContext?.get?.('resource_id');
     // Use the singleton mcp instance
-    //const toolsets = await mcp.getToolsets();
+    const toolsets = await mcp.getToolsets();
     console.log('searching ...')
     // Compose prompt for the agent
     const prompt = [
@@ -111,6 +111,7 @@ const callCandidateSearchStep = createStep({
       'Return a JSON array of candidates with name, profileUrl, platform, and summary.'
     ].join('\n');
     const response = await candidateSearchAgent.generate(prompt, {
+      toolsets,
       output: z.array(candidateSchema),
       memory: {thread: threadId, resource: resourceId}
     });
