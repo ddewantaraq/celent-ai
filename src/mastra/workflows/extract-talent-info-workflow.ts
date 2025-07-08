@@ -93,7 +93,11 @@ const callCandidateSearchStep = createStep({
   description: 'Call the agent to search for candidates using MCP Smithery tools',
   inputSchema: extractTalentInfoSchema,
   outputSchema: candidatesListSchema,
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, runtimeContext }) => {
+    // Log runtimeContext values
+    const threadId: string = runtimeContext?.get?.('thread_id');
+    const resourceId: string = runtimeContext?.get?.('resource_id');
+    console.log('CandidateSearchStep runtimeContext:', { threadId, resourceId });
     // Use the singleton mcp instance
     const toolsets = await mcp.getToolsets();
     console.log('searching ...')
@@ -109,6 +113,7 @@ const callCandidateSearchStep = createStep({
     const response = await candidateSearchAgent.generate(prompt, {
       toolsets,
       output: z.array(candidateSchema),
+      memory: {thread: threadId, resource: resourceId}
     });
     console.log('done ...')
     //await mcp.disconnect();

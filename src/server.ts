@@ -8,6 +8,8 @@ import authRoutes from './routes/auth';
 import { authenticateJWT } from './middleware/auth';
 import sequelize from './config/database';
 import candidateRoutes from './routes/candidate';
+import { RuntimeContext } from "@mastra/core/di";
+import { AuthenticatedRequest } from './types';
 
 const app = express();
 app.use(express.json());
@@ -21,12 +23,16 @@ app.use(rateLimit({
 }));
 
 // Example endpoint to trigger the weather workflow
-app.post('/weather', authenticateJWT, async (req, res) => {
+app.post('/weather', authenticateJWT, async (req: AuthenticatedRequest, res) => {
   try {
     const input = req.body;
+    const user = req.user;
     const workflow = mastra.getWorkflow('weatherWorkflow');
     const run = await workflow.createRunAsync();
-    const result = await run.start({ inputData: input });
+    const runtimeContext = new RuntimeContext();
+    runtimeContext.set('thread_id', `weather-${user?.id}`);
+    runtimeContext.set('resource_id', `weather-${user?.email}`);
+    const result = await run.start({ inputData: input, runtimeContext });
     return res.json({ success: true, result });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
