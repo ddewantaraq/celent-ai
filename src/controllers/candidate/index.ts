@@ -13,12 +13,12 @@ export const findCandidate = async (
   res: Response
 ) => {
   try {
-    const { query, suspendedStep } = req.body;
+    const { query, suspendedStep, candidates, runId } = req.body;
     const user = {
       id: req.user.id,
       email: req.user.email,
     };
-    const result = await findCandidateService({ query, suspendedStep, user });
+    const result = await findCandidateService({ query, suspendedStep, user, candidates, runId });
     return res.json(result);
   } catch (error: any) {
     return res.status(400).json({ message: error.message });

@@ -7,17 +7,26 @@ export async function findCandidateService({
   query,
   suspendedStep,
   user,
+  candidates,
+  runId
 }: {
   query: string;
   suspendedStep?: string[];
   user: { id: number; email: string };
+  candidates: any[],
+  runId: string
 }) {
   const workflow = mastra.getWorkflow("extractTalentInfoWorkflow");
   let run,
     result: any = {};
 
-  // Start a new workflow run
-  run = await workflow.createRunAsync();
+  // Start a new/existing workflow run
+  if (runId) {
+    run = await workflow.createRunAsync({runId: runId});
+  } else {
+    run = await workflow.createRunAsync();
+  }
+
 
   function randomString(length = 5) {
     return Math.random()
@@ -34,9 +43,17 @@ export async function findCandidateService({
     result = await run.start({ inputData: { query }, runtimeContext });
   } else {
     // resume
+    let resumeData = { query }
+    if (suspendedStep.length > 0) {
+      const step: any = suspendedStep[0]
+      if (step === 'ask-to-store-candidate') {
+        resumeData = {...resumeData, ...{candidates: candidates}, ...{store: true}}
+      }
+    }
+
     result = await run.resume({
       step: suspendedStep,
-      resumeData: { query },
+      resumeData: resumeData,
       runtimeContext,
     });
   }
@@ -49,6 +66,16 @@ export async function findCandidateService({
     if (!suspendedStep) {
       throw new Error("Could not determine suspended step id.");
     }
+
+    if (result.steps[suspendedStep[0]]?.suspendPayload) {
+      return {
+        runId: run.runId,
+        suspended: true,
+        suspendedStep: suspendedStep,
+        message: result.steps[suspendedStep[0]]?.suspendPayload?.message,
+        result: result.steps[suspendedStep[0]]?.suspendPayload,
+      };
+    }
     return {
       suspended: true,
       suspendedStep: suspendedStep,
@@ -56,6 +83,9 @@ export async function findCandidateService({
         "Please re-enter your query and include job title, platform, and location.",
     };
   }
+
+  // store to save candidates
+  await saveCandidateService({candidates: result?.result?.candidates || [], userId: user.id});
 
   return { success: true, result: result?.result };
 }

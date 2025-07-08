@@ -2,8 +2,9 @@ import { createWorkflow, createStep } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { extractTalentInfoAgent } from '../agents/talent-agent';
 import { extractTalentInfoSchema } from '../schemas/extract-talent-info.schema';
-import { candidateSearchAgent } from '../agents/candidate-search-agent';
+import { candidateSearchAgent, storeCandidateAgent } from '../agents/candidate-search-agent';
 import { MCPClient } from '@mastra/mcp';
+import { query } from 'express';
 
 const callExtractAgentStep = createStep({
   id: 'call-extract-talent-info-agent',
@@ -75,18 +76,18 @@ const apiKey = process.env.SMITHERY_API_KEY;
 const serverName = process.env.SMITHERY_LINKEDIN_URL;
 
 // Initialize MCP client for Smithery (singleton)
-const mcp = new MCPClient({
-  servers: {
-    smithery: {
-      url: new URL(`https://server.smithery.ai/${serverName}/mcp?api_key=${apiKey}&profile=${profileId}`),
-      requestInit: {
-        headers: {
-          Authorization: `Bearer ${process.env.SMITHERY_API_KEY}`,
-        },
-      },
-    },
-  },
-});
+// const mcp = new MCPClient({
+//   servers: {
+//     smithery: {
+//       url: new URL(`https://server.smithery.ai/${serverName}/mcp?api_key=${apiKey}&profile=${profileId}`),
+//       requestInit: {
+//         headers: {
+//           Authorization: `Bearer ${process.env.SMITHERY_API_KEY}`,
+//         },
+//       },
+//     },
+//   },
+// });
 
 const callCandidateSearchStep = createStep({
   id: 'call-candidate-search-agent',
@@ -97,9 +98,8 @@ const callCandidateSearchStep = createStep({
     // Log runtimeContext values
     const threadId: string = runtimeContext?.get?.('thread_id');
     const resourceId: string = runtimeContext?.get?.('resource_id');
-    console.log('CandidateSearchStep runtimeContext:', { threadId, resourceId });
     // Use the singleton mcp instance
-    const toolsets = await mcp.getToolsets();
+    //const toolsets = await mcp.getToolsets();
     console.log('searching ...')
     // Compose prompt for the agent
     const prompt = [
@@ -111,7 +111,6 @@ const callCandidateSearchStep = createStep({
       'Return a JSON array of candidates with name, profileUrl, platform, and summary.'
     ].join('\n');
     const response = await candidateSearchAgent.generate(prompt, {
-      toolsets,
       output: z.array(candidateSchema),
       memory: {thread: threadId, resource: resourceId}
     });
@@ -119,6 +118,53 @@ const callCandidateSearchStep = createStep({
     //await mcp.disconnect();
     return { candidates: response.object || [] };
   },
+});
+
+const askToStoreCandidateStep = createStep({
+  id: 'ask-to-store-candidate',
+  inputSchema: candidatesListSchema,
+  outputSchema: z.object({
+    candidates: z.array(candidateSchema),
+    query: z.string()
+  }),
+  suspendSchema: z.object({
+    store: z.boolean(),
+    candidates: z.array(candidateSchema),
+    message: z.string()
+  }),
+  execute: async ({ inputData, suspend, resumeData }) => {
+    if (resumeData?.store) {
+      return { candidates: resumeData?.candidates, query: resumeData?.query };
+    }
+    // Suspend and ask user if they want to store a candidate
+    await suspend({
+      store: false, // user will provide this
+      candidates: inputData.candidates,
+      message: 'Are you want to save all candidates result? If yes, I will proceed to store them. If you ask to store specific candidates, please mention their name.'
+    });
+    return { store: false, candidates: inputData.candidates, query: '' };
+  },
+});
+
+const storeCandidateStep = createStep({
+  id: 'store-candidate',
+  inputSchema: z.object({
+    query: z.string(),
+    candidates: z.array(candidateSchema),
+  }),
+  outputSchema: candidatesListSchema,
+  execute: async ({ inputData }) => {
+    const prompt = [
+      'Based on the candidates data below:',
+      JSON.stringify(inputData?.candidates, null, 2),
+      `and query that user input: ${inputData?.query}`,
+      'Return a JSON array of candidates with name, profileUrl, platform, and summary and store candidates based on user request'
+    ].join('\n');
+    const response = await storeCandidateAgent.generate(prompt, {
+      output: z.array(candidateSchema),
+    });
+    return { candidates: response.object || [] };;
+  }
 });
 
 export const extractTalentInfoWorkflow = createWorkflow({
@@ -131,4 +177,6 @@ export const extractTalentInfoWorkflow = createWorkflow({
 })
   .then(callExtractAgentStep)
   .then(callCandidateSearchStep)
+  .then(askToStoreCandidateStep)
+  .then(storeCandidateStep)
   .commit(); 

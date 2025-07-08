@@ -11,6 +11,9 @@ export const extractTalentInfoAgent = new Agent({
     - Platform (YouTube, TikTok, LinkedIn)
     - Location (city, region, or country)
     If any of these are not mentioned, return 'not provided' for that field.
+    If user asks to retrieve last conversation in any question format, 
+    please return the last information that user already given.
+    Utilize memory to retrieve the last conversation and return the same format like describe above
     If there are any description that relevant to be included (experience, skillset, etc)
     please include it as additional description.
     Respond only with a JSON object with keys: jobTitle, platform, location, additionalDescription.
