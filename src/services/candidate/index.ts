@@ -60,20 +60,31 @@ export async function findCandidateService({
   return { success: true, result: result?.result };
 }
 
-export async function saveCandidateService(candidateData: {
-  name: string;
-  profileUrl: string;
-  platform: string;
-  summary: string;
+export async function saveCandidateService({
+  candidates,
+  userId,
+}: {
+  candidates: Array<{
+    name: string;
+    profileUrl: string;
+    platform: string;
+    summary: string;
+  }>;
+  userId: number;
 }) {
-  const candidate = await Candidate.create(candidateData as any);
-  return candidate;
+  const savedCandidates = await Promise.all(
+    candidates.map((candidateData) =>
+      Candidate.create({ ...candidateData, userId } as any)
+    )
+  );
+  return savedCandidates;
 }
 
-export async function getAllCandidatesService() {
-  const candidates = await Candidate.findAll();
+export async function getAllCandidatesService(userId: number) {
+  const candidates = await Candidate.findAll({ where: { userId } });
   return candidates;
 }
+
 export async function getMessageHistoryService(thread_id: string) {
   const { uiMessages } = await celentMemory.query({
     threadId: thread_id,

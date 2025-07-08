@@ -28,6 +28,9 @@ export class Candidate extends Model<Candidate> {
   @Column(DataType.TEXT)
   declare summary: string;
 
+  @Column(DataType.INTEGER)
+  declare userId: number;
+
   @CreatedAt
   @Column(DataType.DATE)
   declare createdAt: Date;

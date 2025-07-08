@@ -27,17 +27,31 @@ export const findCandidate = async (
 
 export const saveCandidate = async (req: Request, res: Response) => {
   try {
-    const { name, profileUrl, platform, summary } = req.body;
-    if (!name || !profileUrl || !platform || !summary) {
-      return res.status(400).json({ message: "All fields are required." });
+    const { candidates } = req.body;
+    const userId = (req as any).user?.id;
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      return res.status(400).json({ message: "Candidates array is required." });
     }
-    const candidate = await saveCandidateService({
-      name,
-      profileUrl,
-      platform,
-      summary,
-    });
-    return res.status(201).json(candidate);
+    for (const candidate of candidates) {
+      if (
+        !candidate.name ||
+        !candidate.profileUrl ||
+        !candidate.platform ||
+        !candidate.summary
+      ) {
+        return res.status(400).json({
+          message:
+            "Each candidate must have name, profileUrl, platform, and summary.",
+        });
+      }
+    }
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: user id not found." });
+    }
+    const savedCandidates = await saveCandidateService({ candidates, userId });
+    return res.status(201).json(savedCandidates);
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
   }
@@ -45,8 +59,14 @@ export const saveCandidate = async (req: Request, res: Response) => {
 
 export const getCandidates = async (req: Request, res: Response) => {
   try {
-    const candidate = await getAllCandidatesService();
-    return res.status(201).json(candidate);
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: user id not found." });
+    }
+    const candidates = await getAllCandidatesService(userId);
+    return res.status(200).json(candidates);
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
   }
