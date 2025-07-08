@@ -8,4 +8,6 @@ services:
       - docker.env.prod
     ports:
       - "${PORT:-3000}:3000"
-    restart: always 
+    restart: always
+    volumes:
+      - /root/ca.crt:/root/ca.crt:ro 
