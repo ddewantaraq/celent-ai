@@ -37,7 +37,7 @@ export const celentMemory = new Memory({
   storage: storage,
   options: {
     threads: {
-      generateTitle: false,
+      generateTitle: true,
     },
     lastMessages: 10,
     semanticRecall: false,

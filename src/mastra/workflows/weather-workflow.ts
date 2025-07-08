@@ -93,7 +93,7 @@ const planActivities = createStep({
   outputSchema: z.object({
     activities: z.string(),
   }),
-  execute: async ({ inputData, mastra }) => {
+  execute: async ({ inputData, mastra, runtimeContext }) => {
     const forecast = inputData;
 
     if (!forecast) {
@@ -104,6 +104,10 @@ const planActivities = createStep({
     if (!agent) {
       throw new Error('Weather agent not found');
     }
+
+    const threadId: string = runtimeContext?.get?.('thread_id');
+    const resourceId: string = runtimeContext?.get?.('resource_id');
+    console.log('fetchWeather runtimeContext:', { threadId, resourceId });
 
     const prompt = `Based on the following weather forecast for ${forecast.location}, suggest appropriate activities:
       ${JSON.stringify(forecast, null, 2)}
@@ -152,7 +156,7 @@ const planActivities = createStep({
         role: 'user',
         content: prompt,
       },
-    ]);
+    ], {memory: {thread: threadId, resource: resourceId}});
 
     let activitiesText = '';
 
