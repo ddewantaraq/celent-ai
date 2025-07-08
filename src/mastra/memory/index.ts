@@ -11,11 +11,17 @@ const password = process.env.DB_PASSWORD || "postgres";
 
 let ssl;
 if (process.env.NODE_ENV === "production" && process.env.DB_CA_PATH) {
-  ssl = {
-    ca: fs.readFileSync(process.env.DB_CA_PATH).toString(),
-    rejectUnauthorized: true,
-  };
+  try {
+    ssl = {
+      ca: fs.readFileSync(process.env.DB_CA_PATH).toString(),
+      rejectUnauthorized: true,
+    };
+  } catch (e) {
+    console.error('Failed to read CA file for PostgresStore:', e);
+  }
 }
+
+console.log("Read CA File Mastra: ", process.env.NODE_ENV, process.env.DB_CA_PATH, ssl)
 
 export const storage = new PostgresStore({
   host,
