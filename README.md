@@ -1,132 +1,103 @@
-# Mastra + Express.js Deployment Guide
+# Celent AI Project
 
-This guide explains how to deploy your Mastra + Express.js application on a VPS using Docker and Docker Compose.
+## Monorepo Structure
+
+This project is split into two main repositories:
+
+- **Frontend:** [React / Next.js UI](https://github.com/ilhamdirga22/)
+- **Backend + AI:** [Express.js API & Mastra AI](https://github.com/ddewantaraq/celent-ai)
 
 ---
 
-## Prerequisites
+## Tech Stack
 
-- A VPS (Ubuntu, Debian, CentOS, etc.) with root or sudo access
+- **Frontend:** React / Next.js
+- **Backend:** Express.js
+- **AI Agent:** Mastra AI Framework, Groq API for chat generation, Llama-3.3-70b-versatile as LLM Model
+- **MCP Server:** smithery.ai
+- **Containerization:** Docker
+- **CI/CD:** GitHub Actions
+- **Cloud Providers:**
+  - Vultr (Backend + AI server)
+  - Vercel (UI / Web app server)
+
+---
+
+## Running Locally (with Docker)
+
+### Prerequisites
 - [Docker](https://docs.docker.com/get-docker/) installed
 - [Docker Compose](https://docs.docker.com/compose/install/) installed
-- Git installed (optional, for cloning your repo)
+- (Optional) Git installed for cloning repositories
 
----
-
-## 1. Prepare Your VPS
-
-SSH into your VPS:
+### 1. Clone the Backend + AI Repository
 ```sh
-ssh youruser@your-vps-ip
+git clone https://github.com/ddewantaraq/celent-ai.git
+cd celent-ai
 ```
 
-Update your package list and install Docker & Docker Compose:
+### 2. Set Up Environment Variables
+- Copy `.env.example` to `.env` and fill in the required values.
+- For development, you can use the provided `docker.env` file.
+
+### 3. Start the Backend + AI Locally
 ```sh
-# For Ubuntu/Debian
-sudo apt update
-sudo apt install -y docker.io docker-compose
-
-# Start Docker and enable on boot
-sudo systemctl start docker
-sudo systemctl enable docker
+docker compose up --build -d
 ```
+- This will start the backend API, AI agent, and a local database (if configured).
+- The backend will be available at `http://localhost:3000` (or your configured port).
+
+### 4. (Optional) Run the Frontend Locally
+- Clone the frontend repo: `git clone https://github.com/ilhamdirga22/`
+- Follow the frontend repo's README for local setup (typically `npm install && npm run dev`).
 
 ---
 
-## 2. Clone Your Project (or Upload Files)
+## Deploying to Cloud
 
-Clone your repository or upload your project files to the VPS:
-```sh
-git clone https://github.com/yourusername/your-repo.git
-cd your-repo
-```
+### Backend + AI (Vultr or other VPS)
+1. **Provision a VPS** (Ubuntu/Debian recommended)
+2. **Install Docker & Docker Compose**
+   ```sh
+   sudo apt update
+   sudo apt install -y docker.io docker-compose
+   sudo systemctl start docker
+   sudo systemctl enable docker
+   ```
+3. **Clone the backend repo and set up environment variables**
+   ```sh
+   git clone https://github.com/ddewantaraq/celent-ai.git
+   cd celent-ai
+   cp docker.env.example docker.env.prod
+   # Edit docker.env.prod with your production values
+   ```
+4. **Start the app in production mode**
+   ```sh
+   docker compose -f docker-compose.prod.yml up --build -d
+   ```
+5. **Check logs and status**
+   ```sh
+   docker compose -f docker-compose.prod.yml logs -f
+   docker ps
+   ```
+6. **Update and restart**
+   ```sh
+   git pull
+   docker compose -f docker-compose.prod.yml up --build -d
+   ```
+7. **Stopping the app**
+   ```sh
+   docker compose -f docker-compose.prod.yml down
+   ```
 
----
-
-## 3. Development vs. Production Deployment
-
-- **Development:** Uses `docker-compose.yml` and `docker.env` (includes local DB service).
-- **Production:** Uses `docker-compose.prod.yml` and `docker.env.prod` (backend app only, connects to your external/managed DB).
-
----
-
-## 4. Production Environment Variables
-
-For production deployments, set your environment variables in `docker.env.prod`:
-
-```env
-NODE_ENV=production
-PORT=3000
-DB_USER=your_prod_user
-DB_PASSWORD=your_prod_password
-DB_NAME=your_prod_db
-DB_HOST=your_prod_db_host
-DB_PORT=your_prod_db_port
-```
-
-Update these values to match your production database credentials and host.
-
----
-
-## 5. Build and Start the App (Production)
-
-From your project directory (where `docker-compose.prod.yml` is located), run:
-
-```sh
-docker compose -f docker-compose.prod.yml up --build -d
-```
-
-- `--build` ensures the image is rebuilt with any changes.
-- `-d` runs the container in the background (detached mode).
-
----
-
-## 6. Check Logs and Status
-
-To see logs:
-```sh
-docker compose -f docker-compose.prod.yml logs -f
-```
-
-To check running containers:
-```sh
-docker ps
-```
-
----
-
-## 7. Update and Restart (Production)
-
-If you update your code:
-```sh
-git pull
-docker compose -f docker-compose.prod.yml up --build -d
-```
-
----
-
-## 8. Stopping the App (Production)
-
-To stop the app:
-```sh
-docker compose -f docker-compose.prod.yml down
-```
-
----
-
-## 9. Accessing the App
-
-Your app will be available at:
-```
-http://your-vps-ip:3000
-```
-
-If you want to use a custom domain or SSL, set up a reverse proxy (e.g., Nginx, Caddy) on your VPS.
+### Frontend (Vercel)
+- Deploy the frontend repo to [Vercel](https://vercel.com/) (see their docs for Next.js deployment).
+- Set environment variables in the Vercel dashboard as needed.
 
 ---
 
 ## Notes
-- For production, the backend app connects to your managed/external database (no local DB container).
+- For production, the backend connects to your managed/external database (no local DB container).
 - `docker.env.prod` and `docker.env` are both ignored by git for security.
 - Adjust the `restart:` policy in `docker-compose.prod.yml` as needed (`always`, `unless-stopped`, etc.).
 - Make sure your firewall allows traffic on port 3000 (or your chosen port). 
