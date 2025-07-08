@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === "production" && process.env.DB_CA_PATH) {
   }
 }
 
-console.log("Read CA File Mastra: ", process.env.NODE_ENV, process.env.DB_CA_PATH, ssl)
+console.log("Read CA File Mastra: ", process.env.NODE_ENV, process.env.DB_CA_PATH)
 
 export const storage = new PostgresStore({
   host,
